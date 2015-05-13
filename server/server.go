@@ -69,6 +69,7 @@ type Server struct {
 	structuredDB   structured.DB
 	structuredREST *structured.RESTServer
 	tsDB           *ts.DB
+	tsServer       *ts.Server
 	raftTransport  multiraft.Transport
 	stopper        *util.Stopper
 }
@@ -142,6 +143,7 @@ func NewServer(ctx *Context, stopper *util.Stopper) (*Server, error) {
 	s.structuredDB = structured.NewDB(s.kv)
 	s.structuredREST = structured.NewRESTServer(s.structuredDB)
 	s.tsDB = ts.NewDB(s.kv)
+	s.tsServer = ts.NewServer(s.tsDB)
 	s.stopper.AddCloser(nCtx.EventFeed)
 
 	return s, nil
@@ -193,6 +195,7 @@ func (s *Server) initHTTP() {
 	s.mux.Handle(kv.RESTPrefix, s.kvREST)
 	s.mux.Handle(kv.DBPrefix, s.kvDB)
 	s.mux.Handle(structured.StructuredKeyPrefix, s.structuredREST)
+	s.mux.Handle(ts.UrlPrefix, s.tsServer)
 }
 
 // Stop stops the server.
